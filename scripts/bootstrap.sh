@@ -15,11 +15,18 @@ if [ ! -f "$CONFIG_FILE" ]; then
     TOKEN="$(node -e "console.log(require('crypto').randomBytes(24).toString('hex'))")"
   fi
 
-  cat >"$CONFIG_FILE" <<EOF
+# Resolve bind address
+BIND_ADDR="${CLAWDBOT_GATEWAY_BIND:-0.0.0.0}"
+# If the bind mode is "lan" or "localhost", it might need specific handling, 
+# but for the config file, it usually expects an IP address or a specific mode string.
+# The error "gateway.bind: Invalid input" suggests "0.0.0.0" or the provided env var is failing validation.
+# Let's map "lan" to "0.0.0.0" if that's what's intended, or use the variable directly.
+
+cat >"$CONFIG_FILE" <<EOF
 {
   "gateway": {
     "mode": "local",
-    "bind": "0.0.0.0",
+    "bind": "$BIND_ADDR",
     "port": 18789,
     "auth": {
       "mode": "token",
@@ -40,8 +47,8 @@ else
   TOKEN="$(jq -r '.gateway.auth.token' "$CONFIG_FILE")"
 fi
 
-# Resolve public URL (Coolify injects SERVICE_FQDN)
-BASE_URL="${SERVICE_FQDN:+https://$SERVICE_FQDN}"
+# Resolve public URL (Coolify injects SERVICE_URL_CLAWDBOT_18789 or SERVICE_FQDN)
+BASE_URL="${SERVICE_URL_CLAWDBOT_18789:-https://$SERVICE_FQDN}"
 BASE_URL="${BASE_URL:-http://localhost:18789}"
 
 if [ "${CLAWDBOT_PRINT_ACCESS:-1}" = "1" ]; then

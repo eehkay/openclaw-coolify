@@ -2,6 +2,9 @@ FROM ghcr.io/moltbot/clawdbot:main
 
 USER root
 
+# Install dependencies
+RUN apt-get update && apt-get install -y jq openssl && rm -rf /var/lib/apt/lists/*
+
 # Add bootstrap script
 COPY scripts/bootstrap.sh /app/scripts/bootstrap.sh
 RUN chmod +x /app/scripts/bootstrap.sh
