@@ -1,7 +1,8 @@
 FROM node:lts-bookworm-slim
 
 # Prevent interactive prompts during package installation
-ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_ROOT_USER_ACTION=ignore
 
 # Install Core & Power Tools
 # Note: Debian "slim" images are minimal. We need to install common tools.
