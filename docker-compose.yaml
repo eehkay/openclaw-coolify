@@ -17,6 +17,12 @@ services:
       NODE_OPTIONS: '--max-old-space-size=4096'
       HOME: /root
       TERM: xterm-256color
+      # Persistence: Command History
+      HISTFILE: /root/.openclaw/.bash_history
+      HISTSIZE: 50000
+      HISTSAVE: 50000
+      HISTCONTROL: ignoreboth
+
       
       # Map OpenClaw vars
       CLAWDBOT_GATEWAY_BIND: lan
@@ -66,8 +72,11 @@ services:
     volumes:
       - openclaw-config:/root/.openclaw
       - openclaw-workspace:/root/openclaw-workspace
-      - openclaw-linkding:/root/openclaw-linkding
+      # - openclaw-linkding:/root/openclaw-linkding
       - openclaw-dbadmin:/root/openclaw-dbadmin
+      # Mount SearXNG setting to auto-generate secret
+      - ./searxng:/app/searxng
+
       # Secure: Socket mount removed in favor of proxy
       # - /var/run/docker.sock:/var/run/docker.sock
 
@@ -93,43 +102,44 @@ services:
       EXEC: 1       # Run commands (exec)
       EVENTS: 1     # Listen for events (if needed)
 
-  qdrant:
-    image: qdrant/qdrant:latest
-    restart: unless-stopped
-    volumes:
-      - qdrant-data:/qdrant/storage
+#  qdrant:
+#    image: qdrant/qdrant:latest
+#    restart: unless-stopped
+#    volumes:
+#      - qdrant-data:/qdrant/storage
 
-  linkding:
-    image: sissbruecker/linkding:latest
-    restart: unless-stopped
-    volumes:
-      - linkding-data:/etc/linkding/data
-    environment:
-      - LD_DISABLE_BACKGROUND_TASKS=False
-      - LD_DISABLE_URL_VALIDATION=False
+#  linkding:
+#    image: sissbruecker/linkding:latest
+#    restart: unless-stopped
+#    volumes:
+#      - linkding-data:/etc/linkding/data
+#    environment:
+#      - LD_DISABLE_BACKGROUND_TASKS=False
+#      - LD_DISABLE_URL_VALIDATION=False
 
-  miniflux:
-    image: miniflux/miniflux:latest
-    restart: unless-stopped
-    depends_on:
-      - miniflux-db
-    environment:
-      - DATABASE_URL=postgres://miniflux:secret@miniflux-db/miniflux?sslmode=disable
-      - RUN_MIGRATIONS=1
-      - CREATE_ADMIN=1
-      - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=admin123
-      - BASE_URL=http://localhost:8080
+#  miniflux:
+#    image: miniflux/miniflux:latest
+#    restart: unless-stopped
+#    depends_on:
+#      - miniflux-db
+#    environment:
+#      - DATABASE_URL=postgres://miniflux:secret@miniflux-db/miniflux?sslmode=disable
+#      - RUN_MIGRATIONS=1
+#      - CREATE_ADMIN=1
+#      - ADMIN_USERNAME=admin
+#      - ADMIN_PASSWORD=admin123
+#      - BASE_URL=http://localhost:8080
 
-  miniflux-db:
-    image: postgres:15-alpine
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=miniflux
-      - POSTGRES_PASSWORD=secret
-      - POSTGRES_DB=miniflux
-    volumes:
-      - miniflux-db:/var/lib/postgresql/data
+#  miniflux-db:
+#    image: postgres:15-alpine
+#    restart: unless-stopped
+#    environment:
+#      - POSTGRES_USER=miniflux
+#      - POSTGRES_PASSWORD=secret
+#      - POSTGRES_DB=miniflux
+#    volumes:
+#      - miniflux-db:/var/lib/postgresql/data
+
   
   searxng:
     image: searxng/searxng:latest
@@ -141,7 +151,7 @@ services:
       - SEARXNG_URL=http://localhost:8888/
       # Enable JSON format
     volumes:
-      - searxng-data:/etc/searxng
+      - ./searxng:/etc/searxng
     cap_drop:
       - ALL
     cap_add:
@@ -155,7 +165,7 @@ volumes:
   openclaw-workspace:
   openclaw-linkding:
   openclaw-dbadmin:
-  qdrant-data:
-  linkding-data:
-  miniflux-db:
   searxng-data:
+#  qdrant-data:
+#  linkding-data:
+#  miniflux-db:

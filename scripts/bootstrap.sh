@@ -105,9 +105,19 @@ if [ ! -f "$CONFIG_FILE" ]; then
     TOKEN="$(openssl rand -hex 24)"
   else
     TOKEN="$(node -e "console.log(require('crypto').randomBytes(24).toString('hex'))")"
+    TOKEN="$(node -e "console.log(require('crypto').randomBytes(24).toString('hex'))")"
   fi
 
-
+  # Auto-generate SearXNG Secret Key
+  SEARXNG_SETTINGS="/app/searxng/settings.yml"
+  if [ -f "$SEARXNG_SETTINGS" ]; then
+      if grep -q "ultrasecretkey" "$SEARXNG_SETTINGS"; then
+          echo "🔑 Generating new SearXNG secret key..."
+          NEW_SECRET=$(openssl rand -hex 32)
+          sed -i "s/ultrasecretkey/$NEW_SECRET/g" "$SEARXNG_SETTINGS"
+          echo "✅ SearXNG secret key updated."
+      fi
+  fi
 cat >"$CONFIG_FILE" <<EOF
 {
   "meta": {
@@ -174,13 +184,67 @@ cat >"$CONFIG_FILE" <<EOF
   },
   "agents": {
     "defaults": {
+      "model": {
+        "primary": "anthropic:default",
+        "fallbacks": []
+      },
       "workspace": "/root/openclaw-workspace",
+      "envelopeTimestamp": "on",
+      "envelopeElapsed": "on",
+      "cliBackends": {},
+      "memorySearch": {
+        "enabled": true,
+        "experimental": {
+          "sessionMemory": true
+        },
+        "provider": "gemini",
+        "remote": {
+          "batch": {
+            "enabled": true,
+            "wait": true
+          }
+        },
+        "fallback": "gemini",
+        "store": {
+          "vector": {
+            "enabled": true
+          }
+        },
+        "sync": {
+          "onSessionStart": true
+        },
+        "query": {
+          "hybrid": {
+            "enabled": true
+          }
+        },
+        "cache": {
+          "enabled": true
+        }
+      },
+      "contextPruning": {
+        "hardClear": {
+          "enabled": false
+        }
+      },
       "compaction": {
-        "mode": "safeguard"
+        "mode": "default",
+        "memoryFlush": {
+          "enabled": true
+        }
+      },
+      "elevatedDefault": "ask",
+      "blockStreamingBreak": "text_end",
+      "blockStreamingChunk": {
+        "breakPreference": "sentence"
       },
       "maxConcurrent": 4,
       "subagents": {
-        "maxConcurrent": 8
+        "maxConcurrent": 8,
+        "model": {
+          "primary": "anthropic:default",
+          "fallbacks": []
+        }
       },
       "sandbox": {
         "mode": "non-main",
@@ -196,7 +260,7 @@ cat >"$CONFIG_FILE" <<EOF
     "list": [
       {
         "id": "main",
-        "name": "OpenClaw",
+        "name": "default",
         "default": true,
         "workspace": "/root/openclaw-workspace"
       },
@@ -273,7 +337,7 @@ cat >"$CONFIG_FILE" <<EOF
   "skills": {
     "allowBundled": ["*"],
     "install": {
-      "nodeManager": "bun"
+      "nodeManager": "npm"
     }
   },
   "plugins": {
@@ -297,12 +361,16 @@ cat >"$CONFIG_FILE" <<EOF
         "enabled": true
       },
       "imessage": {
+        "enabled": false
+      },
+      "google-antigravity-auth": {
         "enabled": true
       }
     }
   }
 }
 EOF
+
 fi
 
 # Update TOKEN if it was not set (e.g. if config already existed)
@@ -383,8 +451,8 @@ export OPENCLAW_STATE_DIR="$OPENCLAW_STATE"
 export CLAWDBOT_STATE_DIR="$OPENCLAW_STATE"
 export MOLTBOT_STATE_DIR="$OPENCLAW_STATE"
 
-# Resolve public URL (Coolify injects SERVICE_URL_OPENCLAW or SERVICE_FQDN_MOLTBOT)
-BASE_URL="${SERVICE_FQDN:-${SERVICE_URL_OPENCLAW:-http://localhost:18789}}"
+# Resolve public URL (Coolify injects SERVICE_URL_OPENCLAW)
+BASE_URL="${SERVICE_URL_OPENCLAW:-http://localhost:18789}"
 
 if [ "${OPENCLAW_PRINT_ACCESS:-1}" = "1" ]; then
   if [ "${OPENCLAW_BETA:-false}" = "true" ]; then
@@ -397,11 +465,12 @@ if [ "${OPENCLAW_PRINT_ACCESS:-1}" = "1" ]; then
   echo "Dashboard:"
   echo "$BASE_URL/?token=$TOKEN"
   echo ""
-  echo "WebSocket:"
-  echo "${BASE_URL/https/wss}/__openclaw__/ws"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
 fi
 
 # Run the openclaw gateway using the global binary
 exec openclaw gateway
+
+# If you want to set up custom model and with custom API key, you can run this command first:
+# exec openclaw onboard

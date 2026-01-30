@@ -71,7 +71,9 @@ RUN bun install -g vercel @marp-team/marp-cli https://github.com/tobi/qmd && has
 ENV XDG_CACHE_HOME="/root/.moltbot/cache"
 
 # Python tools
-RUN pip3 install ipython csvkit openpyxl python-docx pypdf botasaurus browser-use --break-system-packages
+RUN pip3 install ipython csvkit openpyxl python-docx pypdf botasaurus browser-use playwright --break-system-packages && \
+    playwright install-deps
+
 
 
 # Debian aliases
@@ -106,7 +108,7 @@ RUN if [ "$OPENCLAW_BETA" = "true" ]; then \
 
 RUN bun pm -g untrusted
 # AI Tool Suite
-RUN bun install -g @openai/codex @google/gemini-cli opencode-ai @steipete/summarize && \
+RUN bun install -g @openai/codex @google/gemini-cli opencode-ai @steipete/summarize @hyperbrowser/agent && \
     curl -fsSL https://claude.ai/install.sh | bash && \
     curl -L https://code.kimi.com/install.sh | bash
 
