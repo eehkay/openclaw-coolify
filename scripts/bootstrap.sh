@@ -389,12 +389,7 @@ ln -sf "$CONFIG_FILE" "$MOLT_STATE/config.json" 2>/dev/null || true
 ln -sf "$CONFIG_FILE" "$CLAW_STATE/config.json" 2>/dev/null || true
 ln -sf "$CONFIG_FILE" "$OPENCLAW_STATE/config.json" 2>/dev/null || true
 
-# Run doctor --fix to handle any migrations or permission issues automatically
-# Run doctor --fix to handle any migrations or permission issues automatically
-if command -v openclaw >/dev/null 2>&1; then
-  echo "🏥 RUNNING OPENCLAW DOCTOR..."
-  openclaw doctor --fix || true
-fi
+
 
 # Seed Agent Workspaces
 seed_agent() {
@@ -460,20 +455,7 @@ else
   BASE_URL="http://localhost:${OPENCLAW_GATEWAY_PORT}"
 fi
 
-if [ "${OPENCLAW_PRINT_ACCESS:-1}" = "1" ]; then
-  if [ "${OPENCLAW_BETA:-false}" = "true" ]; then
-    echo "🧪 OPENCLAW BETA MODE ACTIVE"
-  fi
-  echo ""
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "🦞 OPENCLAW READY"
-  echo ""
-  echo "Dashboard:"
-  echo "$BASE_URL/?token=$TOKEN"
-  echo ""
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo ""
-fi
+
 
 # Install QMD Skills (Context search)
 if [ ! -d "skills/qmd-skills" ]; then
@@ -494,9 +476,34 @@ if [ -n "$CF_TUNNEL_TOKEN" ]; then
 fi
 
 # Run the openclaw gateway using the global binary
+exec openclaw hooks enable boot-md
+exec openclaw hooks enable session-memory
+exec openclaw hooks enable soul-evil 
+
+# Run doctor --fix to handle any migrations or permission issues automatically
+if command -v openclaw >/dev/null 2>&1; then
+  echo "🏥 RUNNING OPENCLAW DOCTOR..."
+  openclaw doctor --fix || true
+fi
+
 exec openclaw gateway
 
 echo ""
 echo "💡 If you want to set up custom model and with custom API key, you can run this command first:"
 echo "   exec openclaw onboard"
 echo ""
+
+if [ "${OPENCLAW_PRINT_ACCESS:-1}" = "1" ]; then
+  if [ "${OPENCLAW_BETA:-false}" = "true" ]; then
+    echo "🧪 OPENCLAW BETA MODE ACTIVE"
+  fi
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "🦞 OPENCLAW READY"
+  echo ""
+  echo "Dashboard:"
+  echo "$BASE_URL/?token=$TOKEN"
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+fi

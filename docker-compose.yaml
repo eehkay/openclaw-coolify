@@ -145,8 +145,6 @@ services:
   searxng:
     image: searxng/searxng:latest
     restart: unless-stopped
-    ports:
-      - "8888:8080" # Host 8888 -> Internal 8080
     environment:
       - SEARXNG_BASE_URL=http://localhost:8888/
       - SEARXNG_URL=http://localhost:8888/
