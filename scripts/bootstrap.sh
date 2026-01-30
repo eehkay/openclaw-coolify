@@ -27,8 +27,6 @@ mkdir -p "$MOLT_STATE/credentials"
 chmod 700 "$MOLT_STATE/credentials"
 
 # Universal Permission Hardening (Runtime Fail-safe)
-# Ensures all global binaries are always executable
-echo "🛡️ HARDENING CLI PERMISSIONS..."
 # Start universal permission hardening
 echo "🛡️ HARDENING CLI PERMISSIONS..."
 chmod -R +x /usr/local/bin/ || true
