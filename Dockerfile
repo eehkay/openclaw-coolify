@@ -8,6 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     wget \
+        util-linux \
     git \
     build-essential \
     software-properties-common \
