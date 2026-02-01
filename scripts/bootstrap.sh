@@ -67,10 +67,10 @@ EOF
 seed_agent "main" "OpenClaw"
 
 # ----------------------------
-# Generate Config with Prime Directive
+# Generate Config
 # ----------------------------
 if [ ! -f "$CONFIG_FILE" ]; then
-  echo "🏥 Generating openclaw.json with Prime Directive..."
+  echo "🏥 Generating openclaw.json..."
   TOKEN=$(openssl rand -hex 24 2>/dev/null || node -e "console.log(require('crypto').randomBytes(24).toString('hex'))")
   cat >"$CONFIG_FILE" <<EOF
 {
@@ -79,7 +79,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
   },
   "agents": {
     "defaults": {
-      "systemPrompt": "🧠 PRIME DIRECTIVE: You are OpenClaw, a Runtime Orchestrator. 1. You access Docker only via tcp://docker-proxy:2375. 2. You only manage containers labeled SANDBOX_CONTAINER=true or openclaw.managed=true. 3. NEVER run 'docker build' or 'docker push' — these are forbidden. Refer to SOUL.md and BOOTSTRAP.md for operational details."
+      "workspace": "$WORKSPACE_DIR"
     },
     "list": [
       { "id": "main", "name": "OpenClaw", "workspace": "$WORKSPACE_DIR" }
@@ -87,6 +87,14 @@ if [ ! -f "$CONFIG_FILE" ]; then
   }
 }
 EOF
+fi
+
+# ----------------------------
+# Fix any invalid config keys from previous versions
+# ----------------------------
+if [ -f "$CONFIG_FILE" ]; then
+  echo "🔧 Running openclaw doctor --fix..."
+  openclaw doctor --fix --yes 2>/dev/null || true
 fi
 
 # ----------------------------
