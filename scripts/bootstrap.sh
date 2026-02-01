@@ -114,24 +114,28 @@ fi
 export OPENCLAW_STATE_DIR="$OPENCLAW_STATE"
 
 # ----------------------------
-# Sandbox setup
+# Sandbox setup (optional - requires Docker access)
 # ----------------------------
-[ -f scripts/sandbox-setup.sh ] && bash scripts/sandbox-setup.sh
-[ -f scripts/sandbox-browser-setup.sh ] && bash scripts/sandbox-browser-setup.sh
+if [ -f scripts/sandbox-setup.sh ]; then
+  bash scripts/sandbox-setup.sh || echo "⚠️  Sandbox setup skipped (Docker not available)"
+fi
+if [ -f scripts/sandbox-browser-setup.sh ]; then
+  bash scripts/sandbox-browser-setup.sh || echo "⚠️  Sandbox browser setup skipped (Docker not available)"
+fi
 
 # ----------------------------
-# Recovery & Monitoring
+# Recovery & Monitoring (optional)
 # ----------------------------
 if [ -f scripts/recover_sandbox.sh ]; then
   echo "🛡️  Deploying Recovery Protocols..."
-  cp scripts/recover_sandbox.sh "$WORKSPACE_DIR/"
-  cp scripts/monitor_sandbox.sh "$WORKSPACE_DIR/"
-  chmod +x "$WORKSPACE_DIR/recover_sandbox.sh" "$WORKSPACE_DIR/monitor_sandbox.sh"
-  
-  # Run initial recovery
-  bash "$WORKSPACE_DIR/recover_sandbox.sh"
-  
-  # Start background monitor
+  cp scripts/recover_sandbox.sh "$WORKSPACE_DIR/" 2>/dev/null || true
+  cp scripts/monitor_sandbox.sh "$WORKSPACE_DIR/" 2>/dev/null || true
+  chmod +x "$WORKSPACE_DIR/recover_sandbox.sh" "$WORKSPACE_DIR/monitor_sandbox.sh" 2>/dev/null || true
+
+  # Run initial recovery (optional)
+  bash "$WORKSPACE_DIR/recover_sandbox.sh" 2>/dev/null || true
+
+  # Start background monitor (optional)
   nohup bash "$WORKSPACE_DIR/monitor_sandbox.sh" >/dev/null 2>&1 &
 fi
 
