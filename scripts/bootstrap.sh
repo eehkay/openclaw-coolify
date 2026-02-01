@@ -75,6 +75,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
   cat >"$CONFIG_FILE" <<EOF
 {
   "gateway": {
+    "mode": "local",
     "auth": { "mode": "token", "token": "$TOKEN" }
   },
   "agents": {
@@ -87,6 +88,16 @@ if [ ! -f "$CONFIG_FILE" ]; then
   }
 }
 EOF
+fi
+
+# ----------------------------
+# Ensure gateway.mode is set to local
+# ----------------------------
+if [ -f "$CONFIG_FILE" ]; then
+  if ! grep -q '"mode":\s*"local"' "$CONFIG_FILE"; then
+    echo "🔧 Setting gateway.mode=local..."
+    openclaw config set gateway.mode local 2>/dev/null || true
+  fi
 fi
 
 # ----------------------------
